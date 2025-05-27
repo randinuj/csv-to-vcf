@@ -1,63 +1,133 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.cdnfonts.com/css/product-sans" rel="stylesheet">
   <title>CSV to VCF Converter</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <style>
+    @import url('https://fonts.cdnfonts.com/css/product-sans');
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Product Sans', sans-serif;
       text-align: center;
       padding: 40px;
+      background: #f9f9f9;
     }
-    input, button {
-      margin: 10px;
+    input[type="file"] {
+      margin: 20px;
     }
-    #output {
-      white-space: pre-wrap;
+    button {
+      --color: #560bad;
+      font-family: inherit;
+      display: inline-block;
+      width: 8em;
+      height: 2.6em;
+      line-height: 2.5em;
+      margin: 20px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      border: 2px solid var(--color);
+      transition: color 0.5s;
+      z-index: 1;
+      font-size: 17px;
+      border-radius: 6px;
+      font-weight: 500;
+      color: var(--color);
+      background-color: transparent;
+    }
+    button:before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      background: var(--color);
+      height: 150px;
+      width: 200px;
+      border-radius: 50%;
+      top: 100%;
+      left: 100%;
+      transition: all 0.7s;
+    }
+    button:hover {
+      color: #fff;
+    }
+    button:hover:before {
+      top: -30px;
+      left: -30px;
+    }
+    button:active:before {
+      background: #3a0ca3;
+      transition: background 0s;
+    }
+    #downloadLink {
+      display: none;
       margin-top: 20px;
-      text-align: left;
+      text-decoration: none;
+      color: #fff;
+      background-color: #560bad;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    footer {
+      margin-top: 50px;
+      font-size: 14px;
+      color: #333;
+    }
+    footer a {
+      color: #560bad;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <h1>CSV to VCF Converter</h1>
-  <input type="file" id="csvFile" accept=".csv">
+  <input type="file" id="csvFile" accept=".csv" />
   <button onclick="convertCSVtoVCF()">Convert</button>
-  <a id="downloadLink" style="display:none; margin-top: 20px;">Download VCF</a>
-  <div id="output"></div>  <script>
+  <br />
+  <a id="downloadLink">Download VCF File</a>
+
+  <footer>
+    <p>Made with ❤️ by <a href="https://about.me/randinu" target="_blank">RandinuJ</a></p>
+    <p>Button CSS by <a href="https://uiverse.io/cssbuttons-io" target="_blank">cssbuttons-io on Uiverse.io</a></p>
+  </footer>
+
+  <script>
     function convertCSVtoVCF() {
       const fileInput = document.getElementById('csvFile');
       const file = fileInput.files[0];
-
       if (!file) return alert('Please upload a CSV file');
 
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const lines = e.target.result.split('\n').filter(line => line.trim() !== '');
-        let vcfData = '';
+      Papa.parse(file, {
+        complete: function (results) {
+          const rows = results.data.filter(row => row.length >= 3);
+          let vcfData = '';
 
-        for (let i = 0; i < lines.length; i++) {
-          const values = lines[i].split(',');
-          if (values.length < 3) continue; // Skip invalid rows
+          for (let i = 0; i < rows.length; i++) {
+            const [firstNameRaw, lastNameRaw, phoneNumberRaw] = rows[i];
+            const firstName = (firstNameRaw || '').trim();
+            const lastName = (lastNameRaw || '').trim();
+            const phoneNumber = (phoneNumberRaw || '').trim();
+            const fullName = `${firstName} ${lastName}`.trim();
 
-          const firstName = values[0].trim();
-          const lastName = values[1].trim();
-          const phoneNumber = values[2].trim();
+            vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${fullName}\nN:${lastName};${firstName};;;\nTEL;TYPE=CELL:${phoneNumber}\nEND:VCARD\n`;
+          }
 
-          const fullName = `${firstName} ${lastName}`.trim();
-
-          vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${fullName}\nN:${lastName};${firstName};;;\nTEL;TYPE=CELL:${phoneNumber}\nEND:VCARD\n`;
+          const blob = new Blob([vcfData], { type: 'text/vcard' });
+          const link = document.getElementById('downloadLink');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'contacts.vcf';
+          link.style.display = 'inline-block';
+        },
+        error: function (err) {
+          alert('Error parsing CSV: ' + err.message);
         }
-
-        const blob = new Blob([vcfData], { type: 'text/vcard' });
-        const link = document.getElementById('downloadLink');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'contacts.vcf';
-        link.style.display = 'inline-block';
-        link.textContent = 'Download VCF File';
-      };
-
-      reader.readAsText(file);
+      });
     }
-  </script></body>
+  </script>
+</body>
 </html>
