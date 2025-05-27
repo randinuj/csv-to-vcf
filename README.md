@@ -27,6 +27,13 @@ Ex: Donald,Trump,011234567
 ## Live Preview (Optional)
 
 You can deploy this on GitHub Pages:
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 ```bash
 git branch -M main
 git push origin main
+git add LICENSE
+git commit -m "Add MIT license"
+git push
