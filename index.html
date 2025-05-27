@@ -22,13 +22,12 @@
   display: inline-block;
   width: 10em;
   height: 2.6em;
-  line-height: 2.5em;
+  line-height: 2.6em;
   margin: 20px;
   position: relative;
   cursor: pointer;
-  overflow: hidden;
   border: 2px solid var(--color);
-  transition: color 0.5s, background 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
   z-index: 1;
   font-size: 17px;
   border-radius: 6px;
@@ -38,32 +37,10 @@
   text-decoration: none;
 }
 
-.button:before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  background: var(--color);
-  height: 150px;
-  width: 200px;
-  border-radius: 50%;
-  top: 100%;
-  left: 100%;
-  transition: all 0.7s;
-}
-
 .button:hover {
+  background-color: var(--color);
   color: #fff;
-}
-
-.button:hover:before {
-  top: -30px;
-  left: -30px;
-}
-
-/* Remove background override here */
-.button:active {
-  background: #3a0ca3;
-}
+  }
 
     #csvFile {
       display: none;
