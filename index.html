@@ -100,30 +100,49 @@
       if (!file) return alert('Please upload a CSV file');
 
       Papa.parse(file, {
-        complete: function (results) {
-          const rows = results.data.filter(row => row.length >= 3);
-          let vcfData = '';
+  complete: function (results) {
+    const data = results.data;
+    if (data.length < 2) {
+      alert('CSV must include a header and at least one data row.');
+      return;
+    }
 
-          for (let i = 0; i < rows.length; i++) {
-            const [firstNameRaw, lastNameRaw, phoneNumberRaw] = rows[i];
-            const firstName = (firstNameRaw || '').trim();
-            const lastName = (lastNameRaw || '').trim();
-            const phoneNumber = (phoneNumberRaw || '').trim();
-            const fullName = `${firstName} ${lastName}`.trim();
+    const headers = data[0].map(h => h.toLowerCase().trim());
+    const nameIndexes = [];
+    const phoneIndexes = [];
 
-            vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${fullName}\nN:${lastName};${firstName};;;\nTEL;TYPE=CELL:${phoneNumber}\nEND:VCARD\n`;
-          }
+    // Find all columns with "name" or "phone" in the header
+    headers.forEach((header, index) => {
+      if (header.includes('name')) nameIndexes.push(index);
+      if (header.includes('phone')) phoneIndexes.push(index);
+    });
 
-          const blob = new Blob([vcfData], { type: 'text/vcard' });
-          const link = document.getElementById('downloadLink');
-          link.href = URL.createObjectURL(blob);
-          link.download = 'contacts.vcf';
-          link.style.display = 'inline-block';
-        },
-        error: function (err) {
-          alert('Error parsing CSV: ' + err.message);
-        }
-      });
+    const rows = data.slice(1).filter(row => row.length > 0);
+    let vcfData = '';
+
+    rows.forEach(row => {
+      // Combine all name parts
+      const nameParts = nameIndexes.map(idx => row[idx] || '').map(s => s.trim()).filter(Boolean);
+      const fullName = nameParts.join(' ');
+      const [firstName = '', ...rest] = nameParts;
+      const lastName = rest.join(' ');
+
+      // Use the first valid phone number found
+      const phoneNumber = phoneIndexes.map(idx => row[idx] || '').map(s => s.trim()).find(s => s) || '';
+
+      vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${fullName}\nN:${lastName};${firstName};;;\nTEL;TYPE=CELL:${phoneNumber}\nEND:VCARD\n`;
+    });
+
+    const blob = new Blob([vcfData], { type: 'text/vcard' });
+    const link = document.getElementById('downloadLink');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'contacts.vcf';
+    link.style.display = 'inline-block';
+  },
+  error: function (err) {
+    alert('Error parsing CSV: ' + err.message);
+  }
+});
     }
   </script>
 </body>
